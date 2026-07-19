@@ -2,24 +2,39 @@ const API="https://remote-call-backend-1.onrender.com";
 
 async function makeCall(){
 
-    const number=document.getElementById("number").value;
+    const numberInput=document.getElementById("number");
+    const statusEl=document.getElementById("status");
+    const number=numberInput.value.trim();
 
-    const response=await fetch(API+"/call",{
+    if(!number){
+        statusEl.innerText="Enter a phone number first";
+        return;
+    }
 
-        method:"POST",
+    statusEl.innerText="Sending...";
 
-        headers:{
-            "Content-Type":"application/json"
-        },
+    try{
+        const response=await fetch(API+"/call",{
 
-        body:JSON.stringify({
-            number:number
-        })
+            method:"POST",
 
-    });
+            headers:{
+                "Content-Type":"application/json"
+            },
 
-    const result=await response.json();
+            body:JSON.stringify({
+                number:number
+            })
 
-    document.getElementById("status").innerText=result.message;
+        });
+
+        const result=await response.json();
+
+        statusEl.innerText=result.message;
+
+    }catch(err){
+        // Network error, backend asleep/unreachable, CORS issue, etc.
+        statusEl.innerText="Could not reach server: "+err.message;
+    }
 
 }
