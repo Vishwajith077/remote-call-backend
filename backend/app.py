@@ -5,7 +5,7 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 sock = Sock(app)
-# Stores the connected Android phone
+
 phone_socket = None
 
 
@@ -14,9 +14,9 @@ def home():
     return "Remote Call Backend Running"
 
 
-# Called by the web app
 @app.route("/call", methods=["POST"])
-def make_call():
+def call():
+
     global phone_socket
 
     if phone_socket is None:
@@ -25,7 +25,8 @@ def make_call():
             "message": "Phone is not connected"
         }), 400
 
-    data = request.json
+    data = request.get_json()
+
     number = data.get("number")
 
     if not number:
@@ -34,37 +35,60 @@ def make_call():
             "message": "Phone number required"
         }), 400
 
-    phone_socket.send(f"CALL:{number}")
+    try:
+        phone_socket.send(f"CALL:{number}")
 
-    return jsonify({
-        "success": True,
-        "message": "Call command sent"
-    })
+        return jsonify({
+            "success": True,
+            "message": "Call command sent"
+        })
+
+    except Exception as e:
+
+        phone_socket = None
+
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
 
 
-# Android connects here
 @sock.route("/phone")
 def phone(ws):
+
     global phone_socket
 
     phone_socket = ws
+
+    print("===================================")
     print("Phone Connected")
+    print("===================================")
 
     try:
+
         while True:
+
             message = ws.receive()
 
             if message is None:
                 break
 
-            print("Phone:", message)
+            print("PHONE >", message)
+
+            if message == "HELLO":
+                ws.send("WELCOME")
 
     except Exception as e:
-        print(e)
+
+        print("Socket Error:", e)
 
     finally:
-        phone_socket = None
+
+        print("===================================")
         print("Phone Disconnected")
+        print("===================================")
+
+        phone_socket = None
 
 
 if __name__ == "__main__":
