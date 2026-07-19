@@ -1,9 +1,10 @@
 from flask import Flask, request, jsonify
 from flask_sock import Sock
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 sock = Sock(app)
-
 # Stores the connected Android phone
 phone_socket = None
 
